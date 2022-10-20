@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, Button } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   NavigationContainer,
   useNavigation,
@@ -28,19 +28,60 @@ const LogNavigator = () => (
 );
 
 export default function App() {
-  const initialiseNote = async () => {
-    await AsyncStorage.setItem("NOTES", "value");
+  const [stat, setStat] = useState(false);
+
+  const checker = async () => {
+    try {
+      const value = await AsyncStorage.getItem("NOTES");
+      let n = value ? JSON.parse(value) : [];
+      if (n !== []) {
+        setStat(true);
+      } else {
+        const getDate = new Date();
+        const getDay = getDate.toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+        const getTime = getDate.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const noteDate = `${getDay} at ${getTime}`;
+        n.push({ date: noteDate, text: "Welcome to Care. Here's your log." });
+        await AsyncStorage.setItem("NOTES", JSON.stringify(n)).then(() =>
+          setStat(true)
+        );
+      }
+    } catch (err) {
+      alert(err);
+    }
   };
 
+  useEffect(() => {
+    checker();
+  });
+
+  const InitialView = () => (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Still initialising</Text>
+    </View>
+  );
+
+  const UsualView = () => (
+    <Swiper loop={false} showsPagination={false} horizontal={false}>
+      <View style={{ flex: 1 }}>
+        <CreateScreen />
+      </View>
+      <LogNavigator />
+    </Swiper>
+  );
+
   return (
-    <ApplicationProvider {...eva} theme={eva.dark}>
+    <ApplicationProvider {...eva} theme={eva.light}>
       <NavigationContainer>
-        <Swiper loop={false} showsPagination={false} horizontal={false}>
-          <View style={{ flex: 1 }}>
-            <CreateScreen />
-          </View>
-          <LogNavigator />
-        </Swiper>
+        {(stat) ? <UsualView /> : <InitialView />}
       </NavigationContainer>
     </ApplicationProvider>
   );
