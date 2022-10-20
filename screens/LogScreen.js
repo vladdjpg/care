@@ -1,15 +1,12 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  FlatList,
-  Touchable,
-} from "react-native";
-import React, { useState } from "react";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Divider, List, ListItem } from "@ui-kitten/components";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { List, ListItem } from "@ui-kitten/components";
+import React, { useState } from "react";
+import {
+  Keyboard, Pressable, StyleSheet,
+  Text,
+  View
+} from "react-native";
 
 export const LogScreen = () => {
   const [notes, setNotes] = useState([]);
@@ -18,58 +15,125 @@ export const LogScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       getNotes();
-    }, [])
+    }, [notes])
   );
 
   const getNotes = async () => {
     if (notes !== null) {
-        try {
-            AsyncStorage.getItem("NOTES").then((notes) => {
-                setNotes(JSON.parse(notes));
-              })
-        } catch (err) {alert("No notes yet.")}
+      try {
+        AsyncStorage.getItem("NOTES").then((notes) => {
+          setNotes(JSON.parse(notes));
+        });
+      } catch (err) {
+        alert("No notes yet.");
       }
+    }
+  };
+
+  const clearAllLogItems = async () => {
+    try {
+      setNotes([]);
+      await AsyncStorage.setItem("Notes", JSON.stringify(notes));
+    } catch (err) {
+      alert("No notes may be removed.");
+    }
   };
 
   const renderItem = ({ item, index }) => (
     <ListItem
-      title={<Text>{item.text}</Text>}
+      title={<Text style={[styles.listitemtext, {color: 'black'}]}>{item.text}</Text>}
       onPress={() =>
         nav.navigate("Log item", {
           singleNote: item,
         })
-      } style={{color: "black", backgroundColor: "orange", width: 300}}
+      }
+      style={[styles.listitem]}
     />
   );
 
   return (
-    <View style={styles.swiperStyle}>
-      <Text>Log screen</Text>
-      <List
-        data={notes.reverse()}
-        renderItem={renderItem}
-        style={styles.container}
-        ItemSeparatorComponent={Divider}
-      />
-    </View>
+    <Pressable style={styles.container} onPress={Keyboard.dismiss}>
+      <View style={styles.sidecolumns}>
+        <Pressable style={{ flex: 1 }} onPress={clearAllLogItems}>
+          <Text
+            style={[
+              styles.sidetext,
+              {
+                transform: [{ rotate: "90deg" }],
+                width: 500,
+                textAlign: "center",
+                color: "red",
+              },
+            ]}
+          >
+            ↑ swipe right to clear the log ↑
+          </Text>
+        </Pressable>
+      </View>
+      <View style={styles.logcontainer}>
+        <Text
+          style={{
+            fontSize: 40,
+            fontWeight: "bold",
+            textAlign: "center",
+          }}
+        >
+          Log screen
+        </Text>
+        <List
+          data={notes === null ? setNotes([]) : notes.reverse()}
+          renderItem={renderItem}
+          style={styles.list}
+        />
+      </View>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  swiperStyle: {
+  container: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "gray",
+    justifyContent: "space-between",
+  },
+  sidecolumns: {
+    width: 50,
+    height: "100%",
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderStyle: "dotted",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  sidetext: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  list: {
+    backgroundColor: "white",
+    height: 100,
+  },
+  listitem: {
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderStyle: "dotted",
+    width: 300,
+    height: 60,
+  },
+  listitemtext: {
+    fontSize: 15,
+    color: "black",
+    backgroundColor: "pink",
+    width: "100%",
+  },
+  logcontainer: {
     flex: 1,
     backgroundColor: "#fff",
-    color: "black",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 100,
   },
-  container: {
-    fontSize: 20,
-    color: "black",
-    backgroundColor: "green"
-  },
-
   item: {
     marginVertical: 4,
   },
